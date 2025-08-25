@@ -1,13 +1,22 @@
 
 
+import { useState } from 'react'
+import type { DateRange } from 'react-day-picker'
 import { Header } from "@/components/layout/Header"
 import { MetricCard } from "@/components/common/MetricCard"
+import { DateRangePicker } from "@/components/common/DateRangePicker"
 import { mockCryptoMetrics, formatters } from "@/utils/mockData"
 
 function App() {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
+
   const handleMetricClick = (metricId: string) => {
     console.log('Metric clicked:', metricId)
+  }
 
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range)
+    console.log('Date range changed:', range)
   }
 
   return (
@@ -23,6 +32,14 @@ function App() {
           <p className="text-lg text-slate-300 mb-8">
             Acompanhe o desempenho das principais criptomoedas em tempo real
           </p>
+          
+          {/* Date Range Picker */}
+          <div className="flex justify-center mb-8">
+            <DateRangePicker 
+              dateRange={dateRange}
+              onDateRangeChange={handleDateRangeChange}
+            />
+          </div>
         </div>
 
         {/* Metrics Grid */}
