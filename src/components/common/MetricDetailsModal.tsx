@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ChartSkeleton, StatsSkeleton } from "@/components/common/ChartSkeleton";
 import { CHART_COLORS } from "@/constants";
 import type { MetricData } from "@/types/dashboard";
 
@@ -34,6 +35,7 @@ interface MetricDetailsModalProps {
   metric: MetricData | null;
   chartData: ChartDataPoint[];
   dateRange?: DateRange;
+  isLoading?: boolean;
 }
 
 export function MetricDetailsModal({
@@ -42,6 +44,7 @@ export function MetricDetailsModal({
   metric,
   chartData,
   dateRange,
+  isLoading = false,
 }: MetricDetailsModalProps) {
   if (!metric) return null;
 
@@ -125,104 +128,112 @@ export function MetricDetailsModal({
           </div>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-slate-800/50 rounded-lg p-4">
-            <p className="text-slate-400 text-sm">Valor Atual</p>
-            <p className="text-2xl font-bold text-white">
-              {formatTooltipValue(values[values.length - 1])}
-            </p>
-            {change !== undefined && (
-              <div
-                className={cn(
-                  "flex items-center space-x-1 mt-2",
-                  changeType === "positive"
-                    ? "text-emerald-400"
-                    : "text-red-400"
-                )}
-              >
-                {changeType === "positive" ? (
-                  <TrendingUp className="h-4 w-4" />
-                ) : (
-                  <TrendingDown className="h-4 w-4" />
-                )}
-                <span className="text-sm font-medium">{Math.abs(change)}%</span>
-              </div>
-            )}
-          </div>
+        {isLoading ? (
+          <StatsSkeleton />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-slate-800/50 rounded-lg p-4">
+              <p className="text-slate-400 text-sm">Valor Atual</p>
+              <p className="text-2xl font-bold text-white">
+                {formatTooltipValue(values[values.length - 1])}
+              </p>
+              {change !== undefined && (
+                <div
+                  className={cn(
+                    "flex items-center space-x-1 mt-2",
+                    changeType === "positive"
+                      ? "text-emerald-400"
+                      : "text-red-400"
+                  )}
+                >
+                  {changeType === "positive" ? (
+                    <TrendingUp className="h-4 w-4" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4" />
+                  )}
+                  <span className="text-sm font-medium">{Math.abs(change)}%</span>
+                </div>
+              )}
+            </div>
 
-          <div className="bg-slate-800/50 rounded-lg p-4">
-            <p className="text-slate-400 text-sm">Máximo</p>
-            <p className="text-xl font-bold text-emerald-400">
-              {formatTooltipValue(maxValue)}
-            </p>
-          </div>
+            <div className="bg-slate-800/50 rounded-lg p-4">
+              <p className="text-slate-400 text-sm">Máximo</p>
+              <p className="text-xl font-bold text-emerald-400">
+                {formatTooltipValue(maxValue)}
+              </p>
+            </div>
 
-          <div className="bg-slate-800/50 rounded-lg p-4">
-            <p className="text-slate-400 text-sm">Mínimo</p>
-            <p className="text-xl font-bold text-red-400">
-              {formatTooltipValue(minValue)}
-            </p>
-          </div>
+            <div className="bg-slate-800/50 rounded-lg p-4">
+              <p className="text-slate-400 text-sm">Mínimo</p>
+              <p className="text-xl font-bold text-red-400">
+                {formatTooltipValue(minValue)}
+              </p>
+            </div>
 
-          <div className="bg-slate-800/50 rounded-lg p-4">
-            <p className="text-slate-400 text-sm">Média</p>
-            <p className="text-xl font-bold text-slate-300">
-              {formatTooltipValue(avgValue)}
-            </p>
+            <div className="bg-slate-800/50 rounded-lg p-4">
+              <p className="text-slate-400 text-sm">Média</p>
+              <p className="text-xl font-bold text-slate-300">
+                {formatTooltipValue(avgValue)}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="bg-slate-800/30 rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 text-white">
-            Evolução Histórica
-          </h3>
-          <div className="h-64 sm:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
-                <XAxis dataKey="label" stroke="#94a3b8" fontSize={12} />
-                <YAxis
-                  stroke="#94a3b8"
-                  fontSize={12}
-                  tickFormatter={(value) => {
-                    if (value >= 1000000000)
-                      return `${(value / 1000000000).toFixed(1)}B`;
-                    if (value >= 1000000)
-                      return `${(value / 1000000).toFixed(1)}M`;
-                    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-                    return value.toFixed(0);
-                  }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1e293b",
-                    border: "1px solid #475569",
-                    borderRadius: "8px",
-                    color: "#f8fafc",
-                  }}
-                  formatter={(value: number) => [
-                    formatTooltipValue(value),
-                    title,
-                  ]}
-                  labelFormatter={(label) => `Data: ${label}`}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke={getChartColor()}
-                  strokeWidth={3}
-                  dot={false}
-                  activeDot={{
-                    r: 6,
-                    fill: getChartColor(),
-                    stroke: "#1e293b",
-                    strokeWidth: 2,
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+        {isLoading ? (
+          <ChartSkeleton />
+        ) : (
+          <div className="bg-slate-800/30 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4 text-white">
+              Evolução Histórica
+            </h3>
+            <div className="h-64 sm:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
+                  <XAxis dataKey="label" stroke="#94a3b8" fontSize={12} />
+                  <YAxis
+                    stroke="#94a3b8"
+                    fontSize={12}
+                    tickFormatter={(value) => {
+                      if (value >= 1000000000)
+                        return `${(value / 1000000000).toFixed(1)}B`;
+                      if (value >= 1000000)
+                        return `${(value / 1000000).toFixed(1)}M`;
+                      if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+                      return value.toFixed(0);
+                    }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1e293b",
+                      border: "1px solid #475569",
+                      borderRadius: "8px",
+                      color: "#f8fafc",
+                    }}
+                    formatter={(value: number) => [
+                      formatTooltipValue(value),
+                      title,
+                    ]}
+                    labelFormatter={(label) => `Data: ${label}`}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke={getChartColor()}
+                    strokeWidth={3}
+                    dot={false}
+                    activeDot={{
+                      r: 6,
+                      fill: getChartColor(),
+                      stroke: "#1e293b",
+                      strokeWidth: 2,
+                    }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

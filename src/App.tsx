@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header"
 import { MetricCard } from "@/components/common/MetricCard"
 import { DateRangePicker } from "@/components/common/DateRangePicker"
 import { MetricDetailsModal } from "@/components/common/MetricDetailsModal"
+import { MetricCardSkeletonGrid } from "@/components/common/MetricCardSkeleton"
 import { mockCryptoMetrics, formatters, generateMockChartData } from "@/utils/mockData"
 import type { MetricData } from '@/types/dashboard'
 
@@ -13,22 +14,36 @@ function App() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [selectedMetric, setSelectedMetric] = useState<MetricData | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isModalLoading, setIsModalLoading] = useState(false)
 
-  const handleMetricClick = (metricId: string) => {
+  const handleMetricClick = async (metricId: string) => {
     const metric = mockCryptoMetrics.find(m => m.id === metricId)
     if (metric) {
       setSelectedMetric(metric)
       setIsModalOpen(true)
+      setIsModalLoading(true)
+      
+      // Simular carregamento de dados do gráfico
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      setIsModalLoading(false)
     }
   }
 
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedMetric(null)
+    setIsModalLoading(false)
   }
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
+  const handleDateRangeChange = async (range: DateRange | undefined) => {
     setDateRange(range)
+    setIsLoading(true)
+    
+    // Simular carregamento de novos dados
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setIsLoading(false)
+    
     console.log('Date range changed:', range)
   }
 
@@ -58,24 +73,30 @@ function App() {
         </div>
 
         {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {mockCryptoMetrics.map((metric) => (
-            <MetricCard
-              key={metric.id}
-              metric={metric}
-              onClick={() => handleMetricClick(metric.id)}
-              formatValue={metric.id.includes('price') || metric.id.includes('value') 
-                ? formatters.currency 
-                : formatters.compact}
-              subtitle="Últimas 24h"
-            />
-          ))}
+        <div className="mb-8">
+          {isLoading ? (
+            <MetricCardSkeletonGrid count={4} />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {mockCryptoMetrics.map((metric) => (
+                <MetricCard
+                  key={metric.id}
+                  metric={metric}
+                  onClick={() => handleMetricClick(metric.id)}
+                  formatValue={metric.id.includes('price') || metric.id.includes('value') 
+                    ? formatters.currency 
+                    : formatters.compact}
+                  subtitle="Últimas 24h"
+                />
+              ))}
+            </div>
+          )}
         </div>
 
      
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-8 text-center">
           <p className="text-slate-400">
-            🚧 Próximo: Loading States e Error Handling
+            dashboard 
           </p>
         </div>
       </main>
@@ -86,6 +107,7 @@ function App() {
         onClose={handleCloseModal}
         metric={selectedMetric}
         chartData={chartData}
+        isLoading={isModalLoading}
       />
     </div>
   )
