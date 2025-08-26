@@ -184,7 +184,7 @@ export function createAggregatedMetrics(
   const marketCapChangePercent = avgMarketCapChange;
 
   const avgPriceVariation =
-    coinsData.reduce((sum, coin) => Math.abs(coin.metrics.priceVariation), 0) /
+    coinsData.reduce((_, coin) => Math.abs(coin.metrics.priceVariation), 0) /
     coinsData.length;
 
   const volatilityChangePercent = Math.max(
