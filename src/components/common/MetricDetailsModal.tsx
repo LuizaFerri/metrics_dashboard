@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ChartSkeleton, StatsSkeleton } from "@/components/common/ChartSkeleton";
+import { ChartErrorState } from "@/components/common/ErrorStates";
 import { CHART_COLORS } from "@/constants";
 import type { MetricData } from "@/types/dashboard";
 
@@ -36,6 +37,8 @@ interface MetricDetailsModalProps {
   chartData: ChartDataPoint[];
   dateRange?: DateRange;
   isLoading?: boolean;
+  hasError?: boolean;
+  onRetry?: () => void;
 }
 
 export function MetricDetailsModal({
@@ -45,6 +48,8 @@ export function MetricDetailsModal({
   chartData,
   dateRange,
   isLoading = false,
+  hasError = false,
+  onRetry,
 }: MetricDetailsModalProps) {
   if (!metric) return null;
 
@@ -181,6 +186,8 @@ export function MetricDetailsModal({
 
         {isLoading ? (
           <ChartSkeleton />
+        ) : hasError ? (
+          <ChartErrorState onRetry={onRetry} />
         ) : (
           <div className="bg-slate-800/30 rounded-lg p-6">
             <h3 className="text-lg font-semibold mb-4 text-white">

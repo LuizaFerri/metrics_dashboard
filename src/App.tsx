@@ -1,5 +1,3 @@
-
-
 import { useState } from 'react'
 import type { DateRange } from 'react-day-picker'
 import { Header } from "@/components/layout/Header"
@@ -7,6 +5,9 @@ import { MetricCard } from "@/components/common/MetricCard"
 import { DateRangePicker } from "@/components/common/DateRangePicker"
 import { MetricDetailsModal } from "@/components/common/MetricDetailsModal"
 import { MetricCardSkeletonGrid } from "@/components/common/MetricCardSkeleton"
+import { ErrorState } from "@/components/common/ErrorStates"
+import { Toaster } from "@/components/ui/toaster"
+import { useErrorHandler } from "@/hooks/useErrorHandler"
 import { mockCryptoMetrics, formatters, generateMockChartData } from "@/utils/mockData"
 import type { MetricData } from '@/types/dashboard'
 
@@ -16,6 +17,8 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isModalLoading, setIsModalLoading] = useState(false)
+  const [shouldSimulateError, setShouldSimulateError] = useState(false)
+  const { setError, clearError, hasError, createApiError, createNetworkError } = useErrorHandler()
 
   const handleMetricClick = async (metricId: string) => {
     const metric = mockCryptoMetrics.find(m => m.id === metricId)
@@ -23,10 +26,21 @@ function App() {
       setSelectedMetric(metric)
       setIsModalOpen(true)
       setIsModalLoading(true)
+      clearError('modal')
       
-      // Simular carregamento de dados do gráfico
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      setIsModalLoading(false)
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        
+        if (shouldSimulateError && Math.random() > 0.7) {
+          throw new Error('API Error')
+        }
+        
+        setIsModalLoading(false)
+
+      } catch (error) {
+        setIsModalLoading(false)
+        setError('modal', createApiError('Falha ao carregar dados do gráfico'))
+      }
     }
   }
 
@@ -34,17 +48,40 @@ function App() {
     setIsModalOpen(false)
     setSelectedMetric(null)
     setIsModalLoading(false)
+    clearError('modal')
   }
 
   const handleDateRangeChange = async (range: DateRange | undefined) => {
     setDateRange(range)
     setIsLoading(true)
+    clearError('metrics')
     
-    // Simular carregamento de novos dados
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsLoading(false)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      if (shouldSimulateError && Math.random() > 0.6) {
+        throw new Error('Network Error')
+      }
+      
+      setIsLoading(false)
+    } catch (error) {
+      setIsLoading(false)
+      setError('metrics', createNetworkError('Falha ao carregar métricas'))
+    }
     
     console.log('Date range changed:', range)
+  }
+
+  const handleRetryMetrics = () => {
+    clearError('metrics')
+    handleDateRangeChange(dateRange)
+  }
+
+  const handleRetryModal = () => {
+    if (selectedMetric) {
+      clearError('modal')
+      handleMetricClick(selectedMetric.id)
+    }
   }
 
   const chartData = selectedMetric ? generateMockChartData(selectedMetric.id, 30) : []
@@ -76,6 +113,12 @@ function App() {
         <div className="mb-8">
           {isLoading ? (
             <MetricCardSkeletonGrid count={4} />
+          ) : hasError('metrics') ? (
+            <ErrorState
+              variant="network"
+              onRetry={handleRetryMetrics}
+              className="min-h-[200px]"
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {mockCryptoMetrics.map((metric) => (
@@ -94,21 +137,26 @@ function App() {
         </div>
 
      
-        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-8 text-center">
-          <p className="text-slate-400">
-            dashboard 
-          </p>
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-8">
+          <div className="text-center space-y-4">
+           
+          </div>
         </div>
       </main>
 
-      {/* Modal the details of the metric */}
+  {/* Modal the details of the metric */}
       <MetricDetailsModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         metric={selectedMetric}
         chartData={chartData}
         isLoading={isModalLoading}
+        hasError={hasError('modal')}
+        onRetry={handleRetryModal}
       />
+
+      {/* Toast Container */}
+      <Toaster />
     </div>
   )
 }
