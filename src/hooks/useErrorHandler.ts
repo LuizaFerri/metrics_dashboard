@@ -5,7 +5,7 @@ export interface AppError {
   type: 'network' | 'api' | 'validation' | 'generic'
   message: string
   code?: string | number
-  details?: any
+  details?: unknown
 }
 
 export function useErrorHandler() {
@@ -92,7 +92,7 @@ export function useRetry(fn: () => Promise<void>, maxAttempts = 3) {
       await fn()
       setAttempts(0) 
       return true
-    } catch (error) {
+    } catch {
       if (attempts + 1 >= maxAttempts) {
         return false 
       }

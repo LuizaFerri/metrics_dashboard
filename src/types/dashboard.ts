@@ -7,7 +7,7 @@ export interface MetricData {
   icon?: React.ComponentType<{ className?: string }>
   color?: 'blue' | 'green' | 'red' | 'yellow' | 'purple'
   subtitle?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface MetricCardProps {

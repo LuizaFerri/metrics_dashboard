@@ -4,6 +4,15 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/coingecko/(.*)",
+      "destination": "https://api.coingecko.com/api/v3/$1",
+      "headers": {
+        "User-Agent": "MetricsDashboard/1.0",
+        "Accept": "application/json",
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
