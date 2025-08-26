@@ -115,7 +115,7 @@ export function MetricCard({
             changeColors.text
           )}>
             <ChangeIcon className="h-3 w-3" />
-            <span>{Math.abs(change)}%</span>
+            <span>{Math.abs(change).toFixed(1)}%</span>
           </div>
         )}
       </div>
@@ -124,7 +124,12 @@ export function MetricCard({
         {isLoading ? (
           <div className="h-8 bg-slate-700 rounded animate-pulse"></div>
         ) : (
-          <p className="text-3xl font-bold text-white">
+          <p className={cn(
+            "font-bold text-white break-words overflow-hidden leading-tight",
+            formatValue(value).length > 15 ? "text-lg" :
+            formatValue(value).length > 12 ? "text-xl" : 
+            formatValue(value).length > 8 ? "text-2xl" : "text-3xl"
+          )}>
             {formatValue(value)}
           </p>
         )}

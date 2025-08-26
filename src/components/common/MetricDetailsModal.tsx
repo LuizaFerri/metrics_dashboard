@@ -71,6 +71,10 @@ export function MetricDetailsModal({
   };
 
   const formatTooltipValue = (value: number) => {
+    if (!isFinite(value) || isNaN(value)) {
+      return "N/A";
+    }
+
     if (metric.id.includes("price") || metric.id.includes("value")) {
       return new Intl.NumberFormat("pt-BR", {
         style: "currency",
@@ -86,16 +90,20 @@ export function MetricDetailsModal({
       return `$${(value / 1000000).toFixed(2)}M`;
     }
 
+    if (value >= 1000) {
+      return `$${(value / 1000).toFixed(1)}K`;
+    }
+
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "USD",
     }).format(value);
   };
 
-  const values = chartData.map((d) => d.value);
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
-  const avgValue = values.reduce((a, b) => a + b, 0) / values.length;
+  const values = chartData.length > 0 ? chartData.map((d) => d.value).filter(val => val != null && isFinite(val)) : [];
+  const minValue = values.length > 0 ? Math.min(...values) : 0;
+  const maxValue = values.length > 0 ? Math.max(...values) : 0;
+  const avgValue = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -197,11 +205,12 @@ export function MetricDetailsModal({
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
-                  <XAxis dataKey="label" stroke="#94a3b8" fontSize={12} />
+                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
                   <YAxis
                     stroke="#94a3b8"
                     fontSize={12}
                     tickFormatter={(value) => {
+                      if (!isFinite(value) || isNaN(value)) return "0";
                       if (value >= 1000000000)
                         return `${(value / 1000000000).toFixed(1)}B`;
                       if (value >= 1000000)
