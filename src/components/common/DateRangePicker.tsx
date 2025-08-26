@@ -22,6 +22,14 @@ interface DateRangePickerProps {
 
 const datePresets = [
   {
+    label: "Hoje",
+    days: 0,
+    getValue: () => ({
+      from: startOfDay(new Date()),
+      to: endOfDay(new Date()),
+    }),
+  },
+  {
     label: "Últimos 7 dias",
     days: DATE_RANGES.LAST_7_DAYS,
     getValue: () => ({
@@ -62,7 +70,7 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(
-    dateRange || datePresets[1].getValue() // Default: últimos 30 dias
+    dateRange || datePresets[2].getValue()
   );
   const [isMobile, setIsMobile] = useState(false);
 

@@ -1,4 +1,4 @@
-import { AlertTriangle, RefreshCw, Wifi, WifiOff, TrendingDown, FileX } from 'lucide-react'
+import { AlertTriangle, RefreshCw, WifiOff, TrendingDown, FileX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
