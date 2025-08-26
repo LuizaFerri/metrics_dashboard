@@ -11,6 +11,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
+import { VirtualizedChart } from "@/components/common/VirtualizedChart";
 
 import { cn } from "@/lib/utils";
 import {
@@ -201,53 +202,69 @@ export function MetricDetailsModal({
             <h3 className="text-lg font-semibold mb-4 text-white">
               Evolução Histórica
             </h3>
-            <div className="h-64 sm:h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
-                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
-                  <YAxis
-                    stroke="#94a3b8"
-                    fontSize={12}
-                    tickFormatter={(value) => {
-                      if (!isFinite(value) || isNaN(value)) return "0";
-                      if (value >= 1000000000)
-                        return `${(value / 1000000000).toFixed(1)}B`;
-                      if (value >= 1000000)
-                        return `${(value / 1000000).toFixed(1)}M`;
-                      if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-                      return value.toFixed(0);
-                    }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1e293b",
-                      border: "1px solid #475569",
-                      borderRadius: "8px",
-                      color: "#f8fafc",
-                    }}
-                    formatter={(value: number) => [
-                      formatTooltipValue(value),
-                      title,
-                    ]}
-                    labelFormatter={(label) => `Data: ${label}`}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke={getChartColor()}
-                    strokeWidth={3}
-                    dot={false}
-                    activeDot={{
-                      r: 6,
-                      fill: getChartColor(),
-                      stroke: "#1e293b",
-                      strokeWidth: 2,
-                    }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {chartData && chartData.length > 30 ? (
+              <VirtualizedChart
+                data={chartData.map(point => ({
+                  timestamp: new Date(point.date).getTime(),
+                  date: new Date(point.date),
+                  price: point.value,
+                  marketCap: point.value,
+                  volume: point.value
+                }))}
+                metricType="price"
+                title={title || "Métrica"}
+                maxPointsPerView={50}
+                allowFullView={true}
+              />
+            ) : (
+              <div className="h-64 sm:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
+                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
+                    <YAxis
+                      stroke="#94a3b8"
+                      fontSize={12}
+                      tickFormatter={(value) => {
+                        if (!isFinite(value) || isNaN(value)) return "0";
+                        if (value >= 1000000000)
+                          return `${(value / 1000000000).toFixed(1)}B`;
+                        if (value >= 1000000)
+                          return `${(value / 1000000).toFixed(1)}M`;
+                        if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+                        return value.toFixed(0);
+                      }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#1e293b",
+                        border: "1px solid #475569",
+                        borderRadius: "8px",
+                        color: "#f8fafc",
+                      }}
+                      formatter={(value: number) => [
+                        formatTooltipValue(value),
+                        title,
+                      ]}
+                      labelFormatter={(label) => `Data: ${label}`}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke={getChartColor()}
+                      strokeWidth={3}
+                      dot={false}
+                      activeDot={{
+                        r: 6,
+                        fill: getChartColor(),
+                        stroke: "#1e293b",
+                        strokeWidth: 2,
+                      }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         )}
       </DialogContent>

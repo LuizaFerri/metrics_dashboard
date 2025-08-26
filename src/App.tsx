@@ -7,11 +7,13 @@ import { DateRangePicker } from "@/components/common/DateRangePicker"
 import { MetricDetailsModal } from "@/components/common/MetricDetailsModal"
 import { MetricCardSkeletonGrid } from "@/components/common/MetricCardSkeleton"
 import { ErrorState } from "@/components/common/ErrorStates"
+import { CoinPagination } from "@/components/common/CoinPagination"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
 import { useDashboardMetrics, useHistoricalData } from "@/hooks/useCoinGeckoData"
 import { useUserPreferences } from "@/hooks/useUserPreferences"
 import { SettingsModal } from "@/components/common/SettingsModal"
+import { ExpandedCoinView } from "@/components/common/ExpandedCoinView"
 
 import type { MetricData } from '@/types/dashboard'
 
@@ -25,6 +27,7 @@ function App() {
   const [selectedMetric, setSelectedMetric] = useState<MetricData | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isExpandedViewOpen, setIsExpandedViewOpen] = useState(false)
   const { toast } = useToast()
 
   const {
@@ -283,17 +286,49 @@ function App() {
         {/* Prices Section */}
         {shouldShowCoinPrices() && (
           <section className="mb-8 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-100 flex items-center gap-3">
-                🪙 Preços das Moedas
-              </h2>
-              <div className="text-right">
+            {/* Mobile Header */}
+            <div className="block sm:hidden space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+                  🪙 Preços das Moedas
+                </h2>
+                <button
+                  onClick={() => setIsExpandedViewOpen(true)}
+                  className="px-3 py-2 text-sm font-medium rounded-md bg-cyan-500 text-white hover:bg-cyan-600 transition-colors"
+                >
+                  Explorar
+                </button>
+              </div>
+              <div className="text-left">
                 <span className="text-sm text-gray-400 block">
                   {getVisibleCoins().length} criptomoedas
                 </span>
                 <span className="text-xs text-gray-500">
                   Dados em tempo real
                 </span>
+              </div>
+            </div>
+
+            {/* Desktop Header */}
+            <div className="hidden sm:flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-100 flex items-center gap-3">
+                🪙 Preços das Moedas
+              </h2>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setIsExpandedViewOpen(true)}
+                  className="px-3 py-2 text-sm font-medium rounded-md bg-cyan-500 text-white hover:bg-cyan-600 transition-colors"
+                >
+                  Explorar Mais
+                </button>
+                <div className="text-right">
+                  <span className="text-sm text-gray-400 block">
+                    {getVisibleCoins().length} criptomoedas
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    Dados em tempo real
+                  </span>
+                </div>
               </div>
             </div>
             
@@ -308,29 +343,31 @@ function App() {
                 className="min-h-[150px]"
               />
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
-                {metrics
+              <CoinPagination
+                items={metrics
                   ?.filter(metric => {
                     const isCoinMetric = !metric.id.includes('-period')
                     const isVisible = getVisibleCoins().includes(metric.id)
                     return isCoinMetric && isVisible
-                  })
-                  .map((metric) => (
-                    <MetricCard
-                      key={metric.id}
-                      metric={metric}
-                      onClick={() => handleMetricClick(metric.id)}
-                      formatValue={getFormatterForMetric(metric)}
-                      subtitle={
-                        isValidChartPeriod(dateRange) 
-                          ? "Últimas 24h" 
-                          : `${getDaysDifference(dateRange)} dia(s) - Gráfico indisponível`
-                      }
-                      className="text-sm h-full min-h-[140px]"
-                    />
-                  ))
+                  }) || []
                 }
-              </div>
+                itemsPerPage={8}
+                renderItem={(metric) => (
+                  <MetricCard
+                    key={metric.id}
+                    metric={metric}
+                    onClick={() => handleMetricClick(metric.id)}
+                    formatValue={getFormatterForMetric(metric)}
+                    subtitle={
+                      isValidChartPeriod(dateRange) 
+                        ? "Últimas 24h" 
+                        : `${getDaysDifference(dateRange)} dia(s) - Gráfico indisponível`
+                    }
+                    className="text-sm h-full min-h-[140px]"
+                  />
+                )}
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch"
+              />
             )}
           </section>
         )}
@@ -358,6 +395,15 @@ function App() {
         onSave={savePreferences}
         onReset={resetPreferences}
       />
+
+      {/* Expanded Coin View */}
+      {isExpandedViewOpen && (
+        <ExpandedCoinView
+          onClose={() => setIsExpandedViewOpen(false)}
+          onCoinClick={handleMetricClick}
+          formatValue={formatCurrency}
+        />
+      )}
 
       {/* Toast Container */}
       <Toaster />

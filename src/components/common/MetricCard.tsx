@@ -84,11 +84,11 @@ export function MetricCard({
         (!color || color === 'blue') && "bg-cyan-500"
       )} />
 
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
+      <div className="flex items-start justify-between mb-4 gap-2">
+        <div className="flex items-center space-x-3 min-w-0 flex-1">
           {Icon && (
             <div className={cn(
-              "p-2 rounded-lg",
+              "p-2 rounded-lg flex-shrink-0",
               color === 'green' && "bg-emerald-500/20 text-emerald-400",
               color === 'red' && "bg-red-500/20 text-red-400",
               color === 'yellow' && "bg-amber-500/20 text-amber-400",
@@ -98,24 +98,24 @@ export function MetricCard({
               <Icon className="h-5 w-5" />
             </div>
           )}
-          <div>
-            <h3 className="text-sm font-medium text-slate-300 uppercase tracking-wide">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-medium text-slate-300 uppercase tracking-wide truncate">
               {title}
             </h3>
             {subtitle && (
-              <p className="text-xs text-slate-500 mt-1">{subtitle}</p>
+              <p className="text-xs text-slate-500 mt-1 truncate">{subtitle}</p>
             )}
           </div>
         </div>
 
         {change !== undefined && (
           <div className={cn(
-            "flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium",
+            "flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium flex-shrink-0",
             changeColors.bg,
             changeColors.text
           )}>
-            <ChangeIcon className="h-3 w-3" />
-            <span>{Math.abs(change).toFixed(1)}%</span>
+            <ChangeIcon className="h-3 w-3 flex-shrink-0" />
+            <span className="whitespace-nowrap">{Math.abs(change).toFixed(1)}%</span>
           </div>
         )}
       </div>
