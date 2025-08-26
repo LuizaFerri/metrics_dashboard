@@ -1,9 +1,6 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
   "framework": "vite",
   "rewrites": [
     {
@@ -35,17 +32,8 @@
         {
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "no-referrer-when-downgrade"
         }
       ]
     }
-  ],
-  "functions": {
-    "app/api/*.ts": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  ]
 }
