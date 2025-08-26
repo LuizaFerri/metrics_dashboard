@@ -6,6 +6,8 @@ export interface MetricData {
   changeType?: 'positive' | 'negative' | 'neutral'
   icon?: React.ComponentType<{ className?: string }>
   color?: 'blue' | 'green' | 'red' | 'yellow' | 'purple'
+  subtitle?: string
+  metadata?: Record<string, any>
 }
 
 export interface MetricCardProps {
