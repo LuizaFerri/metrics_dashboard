@@ -1,5 +1,20 @@
 export const COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3";
 
+export const COINGECKO_DEV_URL = "/api/coingecko";
+
+export const COINGECKO_API_KEY = import.meta.env.VITE_COINGECKO_API_KEY 
+
+export const getApiBaseUrl = (): string => {
+  if (import.meta.env.DEV) {
+    return COINGECKO_DEV_URL;
+  }
+  return COINGECKO_BASE_URL;
+};
+
+export const shouldUseApiKey = (): boolean => {
+  return !!COINGECKO_API_KEY;
+};
+
 export const API_ENDPOINTS = {
   MARKET_DATA: "/coins/markets",
   HISTORICAL_RANGE: "/coins",
@@ -9,7 +24,7 @@ export const API_ENDPOINTS = {
   PING: "/ping",
 } as const;
 
-export const RATE_LIMIT_DELAY = 2000;
+export const RATE_LIMIT_DELAY = 5000; 
 
 export const SUPPORTED_COINS = [
   "bitcoin",

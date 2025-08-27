@@ -1,5 +1,6 @@
 import {
-  COINGECKO_BASE_URL,
+  getApiBaseUrl,
+  COINGECKO_API_KEY,
   SUPPORTED_COINS,
   API_ENDPOINTS,
   RATE_LIMIT_DELAY,
@@ -16,15 +17,17 @@ const delay = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 export class CoinGeckoApiService {
-  private baseUrl = COINGECKO_BASE_URL;
+  private baseUrl = getApiBaseUrl();
   private lastRequestTime = 0;
 
   private async enforceRateLimit(): Promise<void> {
     const now = Date.now();
     const timeSinceLastRequest = now - this.lastRequestTime;
+    
+    const currentDelay = COINGECKO_API_KEY ? 1000 : RATE_LIMIT_DELAY;
 
-    if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
-      const waitTime = RATE_LIMIT_DELAY - timeSinceLastRequest;
+    if (timeSinceLastRequest < currentDelay) {
+      const waitTime = currentDelay - timeSinceLastRequest;
       await delay(waitTime);
     }
 
@@ -37,23 +40,42 @@ export class CoinGeckoApiService {
   ): Promise<Response> {
     await this.enforceRateLimit();
 
+    let finalUrl = url;
+    if (COINGECKO_API_KEY) {
+      const separator = url.includes('?') ? '&' : '?';
+      finalUrl = `${url}${separator}x_cg_demo_api_key=${COINGECKO_API_KEY}`;
+    }
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const response = await fetch(url);
+        const headers: Record<string, string> = {
+          'User-Agent': 'Mozilla/5.0 (compatible; MetricsDashboard/1.0)',
+          'Accept': 'application/json',
+        };
+
+        if (COINGECKO_API_KEY) {
+          headers['X-CG-API-KEY'] = COINGECKO_API_KEY;
+        } else {
+          console.log('API Key não encontrada');
+        }
+
+        const response = await fetch(finalUrl, { headers });
 
         if (response.ok) {
           return response;
         }
 
         if (response.status === 429) {
-          const waitTime = 2000 * attempt; // 2s, 4s, 6s
+          const retryAfter = response.headers.get('Retry-After');
+          const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : 2000 * attempt;
+          
           await delay(waitTime);
           continue;
         }
 
         if (response.status >= 500) {
           if (attempt < maxRetries) {
-            const waitTime = 1000 * attempt; // 1s, 2s, 3s
+            const waitTime = 1000 * attempt;
             await delay(waitTime);
             continue;
           }
