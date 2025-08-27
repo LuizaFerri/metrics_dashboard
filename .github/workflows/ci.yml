@@ -80,17 +80,20 @@ jobs:
           docker system df
           echo "=== Docker Info ==="
           docker info
+          echo "=== Docker Build Context ==="
+          ls -la
+          echo "=== Dockerfile exists ==="
+          test -f Dockerfile && echo "Dockerfile found" || echo "Dockerfile NOT found"
+          echo "=== nginx.conf exists ==="
+          test -f nginx.conf && echo "nginx.conf found" || echo "nginx.conf NOT found"
       
-      - name: Debug Docker build
+      - name: Manual Docker build (fallback)
+        if: failure()
         run: |
-          echo "=== Docker Images ==="
-          docker images
-          echo "=== Docker Images (filtered) ==="
-          docker images | grep metrics-dashboard || echo "No metrics-dashboard image found"
-          echo "=== Docker System Info ==="
-          docker system df
-          echo "=== Docker Info ==="
-          docker info
+          echo "=== Attempting manual Docker build ==="
+          docker build -t metrics-dashboard:latest .
+          echo "=== Manual build result ==="
+          docker images | grep metrics-dashboard
       
       - name: Test Docker image
         run: |
