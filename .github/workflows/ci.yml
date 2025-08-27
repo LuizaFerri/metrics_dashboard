@@ -64,12 +64,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: Dockerfile
-          tags: metrics-dashboard:latest
-          push: false
+        run: |
+          docker build -t metrics-dashboard:latest .
 
       - name: Run and test container
         run: |
