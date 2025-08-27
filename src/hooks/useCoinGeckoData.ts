@@ -43,14 +43,10 @@ export function useMarketData() {
   })
 }
 
-export function useAllCoinsHistoricalData(dateRange: DateRange | undefined) {
+export function useAllCoinsHistoricalData(dateRange: DateRange) {
   return useQuery({
-    queryKey: ['all-coins-historical', SUPPORTED_COINS, dateRange?.from, dateRange?.to],
+    queryKey: ['all-coins-historical', SUPPORTED_COINS, dateRange.from, dateRange.to],
     queryFn: async () => {
-      if (!dateRange?.from || !dateRange?.to) {
-        throw new Error('Date range é obrigatório')
-      }
-
       const allCoinsData = await Promise.all(
         SUPPORTED_COINS.map(async (coinId) => {
           try {
@@ -74,15 +70,13 @@ export function useAllCoinsHistoricalData(dateRange: DateRange | undefined) {
       
       return validCoinsData
     },
-    enabled: !!dateRange?.from && !!dateRange?.to && 
-      (dateRange?.from && dateRange?.to && 
-       Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) >= 2),
+    enabled: dateRange.from && dateRange.to && Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) >= 1,
     staleTime: CACHE_TIMES.HISTORICAL_DATA,
     retry: 2,
   })
 }
 
-export function useDashboardMetrics(dateRange: DateRange | undefined): {
+export function useDashboardMetrics(dateRange: DateRange): {
   data: MetricData[] | undefined
   isLoading: boolean
   error: Error | null
@@ -94,12 +88,9 @@ export function useDashboardMetrics(dateRange: DateRange | undefined): {
   const isLoading = isLoadingMarket || isLoadingHistorical
   const error = marketError || historicalError
   
-  const transformedData = marketData && historicalData ? [
+  const transformedData = marketData ? [
     ...transformMarketDataToMetrics(marketData),
-    ...createPeriodBasedMetrics(historicalData, dateRange)
-  ] : marketData ? [
-    ...transformMarketDataToMetrics(marketData),
-    ...createPortfolioMetrics(marketData)
+    ...(historicalData ? createPeriodBasedMetrics(historicalData, dateRange) : createPortfolioMetrics(marketData))
   ] : undefined
 
   const refetch = () => {
@@ -117,19 +108,15 @@ export function useDashboardMetrics(dateRange: DateRange | undefined): {
 
 export function useHistoricalData(
   metricId: string | null,
-  dateRange: DateRange | undefined,
+  dateRange: DateRange,
   enabled: boolean = true
 ) {
   const coinId = metricId ? extractCoinIdFromMetric(metricId) : ''
   const metricType = metricId ? getMetricTypeFromId(metricId) : 'price'
 
   return useQuery({
-    queryKey: ['historical-data', coinId, dateRange?.from, dateRange?.to, metricType],
+    queryKey: ['historical-data', coinId, dateRange.from, dateRange.to, metricType],
     queryFn: async () => {
-      if (!dateRange?.from || !dateRange?.to) {
-        throw new Error('Date range é obrigatório')
-      }
-
       const data = await coinGeckoApi.getHistoricalData(coinId, dateRange)
       
       if (!validateHistoricalData(data)) {
@@ -140,9 +127,8 @@ export function useHistoricalData(
       
       return chartData
     },
-    enabled: enabled && !!coinId && !!dateRange?.from && !!dateRange?.to && 
-      (dateRange?.from && dateRange?.to && 
-       Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) >= 2),
+    enabled: enabled && !!coinId && dateRange.from && dateRange.to && 
+      Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) >= 1,
     staleTime: CACHE_TIMES.HISTORICAL_DATA,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
@@ -251,7 +237,7 @@ export function usePrefetchData() {
   }
 }
 
-export function useDashboard(dateRange?: DateRange) {
+export function useDashboard(dateRange: DateRange) {
   const metrics = useDashboardMetrics(dateRange)
   const apiStatus = useApiStatus()
   
@@ -265,20 +251,14 @@ export function useDashboard(dateRange?: DateRange) {
   }
 }
 
-export function usePeriodComparison(dateRange: DateRange | undefined) {
+export function usePeriodComparison(dateRange: DateRange) {
   return useQuery({
-    queryKey: ['period-comparison', dateRange?.from, dateRange?.to],
+    queryKey: ['period-comparison', dateRange.from, dateRange.to],
     queryFn: async () => {
-      if (!dateRange?.from || !dateRange?.to) {
-        return { volumeChangePercent: 0, marketCapChangePercent: 0, volatilityChangePercent: 0 }
-      }
-      
       const comparison = await getCachedPeriodComparison(dateRange)
       return comparison || { volumeChangePercent: 0, marketCapChangePercent: 0, volatilityChangePercent: 0 }
     },
-    enabled: !!dateRange?.from && !!dateRange?.to &&
-      (dateRange?.from && dateRange?.to && 
-       Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) >= 2),
+    enabled: dateRange.from && dateRange.to && Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) >= 1,
     staleTime: CACHE_TIMES.HISTORICAL_DATA,
     retry: 1,
   })
@@ -286,13 +266,13 @@ export function usePeriodComparison(dateRange: DateRange | undefined) {
 
 function createPeriodBasedMetrics(
   historicalData: CoinHistoricalDataWithMetrics[],
-  dateRange: DateRange | undefined,
+  dateRange: DateRange,
   periodComparison?: { volumeChangePercent: number, marketCapChangePercent: number, volatilityChangePercent: number }
 ): MetricData[] {
-  if (!historicalData?.length || !dateRange) return []
+  if (!historicalData?.length) return []
 
   const aggregated = createAggregatedMetrics(historicalData)
-  const days = Math.ceil((dateRange.to!.getTime() - dateRange.from!.getTime()) / (1000 * 60 * 60 * 24))
+  const days = dateRange.from && dateRange.to ? Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) : 0
 
   const volumeChange = periodComparison?.volumeChangePercent ?? aggregated.volumeChangePercent
   const marketCapChange = periodComparison?.marketCapChangePercent ?? aggregated.marketCapChangePercent
