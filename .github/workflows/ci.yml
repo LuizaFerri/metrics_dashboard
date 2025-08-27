@@ -70,19 +70,36 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
+      - name: Debug Docker build
+        run: |
+          echo "=== Docker Images ==="
+          docker images
+          echo "=== Docker Images (filtered) ==="
+          docker images | grep metrics-dashboard || echo "No metrics-dashboard image found"
+          echo "=== Docker System Info ==="
+          docker system df
+          echo "=== Docker Info ==="
+          docker info
+      
+      - name: Debug Docker build
+        run: |
+          echo "=== Docker Images ==="
+          docker images
+          echo "=== Docker Images (filtered) ==="
+          docker images | grep metrics-dashboard || echo "No metrics-dashboard image found"
+          echo "=== Docker System Info ==="
+          docker system df
+          echo "=== Docker Info ==="
+          docker info
+      
       - name: Test Docker image
         run: |
           docker images | grep metrics-dashboard
-          
-          
           docker run --rm --name test-container -d -p 8080:80 metrics-dashboard:latest
-          
           sleep 15
-          
           docker ps | grep test-container
-          
+          curl -f http://localhost:8080/health || echo "Health endpoint not responding"
           curl -f http://localhost:8080/ || echo "App responding on root path"
-          
           docker stop test-container
           docker rm test-container
 
